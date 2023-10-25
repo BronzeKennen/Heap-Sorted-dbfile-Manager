@@ -11,11 +11,16 @@
   BF_ErrorCode code = call; \
   if (code != BF_OK) {         \
     BF_PrintError(code);    \
-    return HP_ERROR;        \
+    return BF_ERROR;        \
   }                         \
 }
 
 int HP_CreateFile(char *fileName){
+
+    BF_Block *block;
+    CALL_BF(BF_CreateFile(fileName));
+    BF_Block_Init(&block);
+    // CALL_BF(BF_Init()); ?????
     return 0;
 }
 
