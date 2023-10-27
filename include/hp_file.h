@@ -1,13 +1,18 @@
 #ifndef HP_FILE_H
 #define HP_FILE_H
-#include <record.h>
+#include "record.h"
 #include "bf.h"
 
+typedef enum Type {
+    Hash,
+    Heap
+} Type;
 /* Η δομή HP_info κρατάει μεταδεδομένα που σχετίζονται με το αρχείο σωρού*/
 typedef struct {
+    Type type;
     int last_block_id;
     int records_per_block;
-
+    
 } HP_info;
 
 typedef struct {

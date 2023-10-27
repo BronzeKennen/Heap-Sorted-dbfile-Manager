@@ -5,7 +5,6 @@
 #include "bf.h"
 #include "hp_file.h"
 #include "record.h"
-
 #define CALL_BF(call)       \
 {                           \
   BF_ErrorCode code = call; \
@@ -16,16 +15,35 @@
 }
 
 int HP_CreateFile(char *fileName){
+    int filedesc;
+    HP_info info = { Heap, 10, 2};
+    BF_Block *block,*block2;
+    int blocknum;
 
-    BF_Block *block;
+
     CALL_BF(BF_CreateFile(fileName));
+
+    CALL_BF(BF_OpenFile(fileName, &filedesc));
+
     BF_Block_Init(&block);
-    // CALL_BF(BF_Init()); ?????
+
+    memcpy(block, &info, sizeof(info)); //COPIES FROM HP_INFO STRUCT TO THE RECENTLY INITIALIZED BLOCK
+    CALL_BF(BF_AllocateBlock(filedesc, block)); //ALLOCATES THE BLOCK WITH HP_INFO DATA TO THE HEAP FILE
+    BF_Block_SetDirty(block);
+    CALL_BF(BF_UnpinBlock(block)); //NOTE: BEFORE CLOSING FILE ALL BLOCKS MUST BE UNPINNED OTHERWISE YOU GET ERROR
+    CALL_BF(BF_CloseFile(filedesc));
     return 0;
 }
 
 HP_info* HP_OpenFile(char *fileName){
-    return NULL ;
+    HP_info *info;
+    int filedesc;
+    BF_Block *block;
+    int blocknum;
+    BF_OpenFile(fileName, &filedesc);
+    BF_GetBlockCounter(filedesc, &blocknum); //THIS RETURNS 1 
+    // BF_ErrorCode error = BF_GetBlock(filedesc,0,block); //TO BLOCK GINETAI ALLOCATED STI THESI 0    // BF_PrintError(error);
+    return info;
 }
 
 
