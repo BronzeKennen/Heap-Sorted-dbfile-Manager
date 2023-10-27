@@ -42,7 +42,8 @@ HP_info* HP_OpenFile(char *fileName){
     int blocknum;
     BF_OpenFile(fileName, &filedesc);
     BF_GetBlockCounter(filedesc, &blocknum); //THIS RETURNS 1 
-    // BF_ErrorCode error = BF_GetBlock(filedesc,0,block); //TO BLOCK GINETAI ALLOCATED STI THESI 0    // BF_PrintError(error);
+    // BF_ErrorCode error = BF_GetBlock(filedesc,0,block); //NO WORKEY <-
+    // BF_PrintError(error);
     return info;
 }
 
