@@ -1,6 +1,6 @@
 #ifndef HP_FILE_H
 #define HP_FILE_H
-#include <record.h>
+#include "record.h"
 
 
 typedef enum Type {
@@ -11,8 +11,7 @@ typedef enum Type {
 typedef struct {
     Type type;
     int last_block_id;
-    int records_per_block;
-    
+   
 } HP_info;
 
 typedef struct {
@@ -79,7 +78,13 @@ int HP_InsertEntry(
 int HP_GetAllEntries(
     int file_desc,
     HP_info* header_info, /* επικεφαλίδα του αρχείου*/
-    int id                /* η τιμή id της εγγραφής στην οποία πραγματοποιείται η αναζήτηση*/);
+    int id                /* η τιμή id της εγγραφής στην οποία πραγματοποιείται η αναζήτηση*/
+);
+
+BF_Block* AllocateAndUpdate (
+    int file_desc,
+    HP_info* header_info
+);
 
 
 #endif // HP_FILE_H
