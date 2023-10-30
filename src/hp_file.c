@@ -5,6 +5,7 @@
 #include "bf.h"
 #include "hp_file.h"
 #include "record.h"
+
 #define CALL_BF(call)       \
 {                           \
   BF_ErrorCode code = call; \
@@ -35,28 +36,26 @@ int HP_CreateFile(char *fileName){
     return 0;
 }
 
-HP_info* HP_OpenFile(char *fileName){
-    HP_info *info;
-    int filedesc;
+HP_info* HP_OpenFile(char *fileName, int *file_desc){
+    HP_info* hpInfo;    
     BF_Block *block;
     int blocknum;
-    BF_OpenFile(fileName, &filedesc);
-    BF_GetBlockCounter(filedesc, &blocknum); //THIS RETURNS 1 
-    // BF_ErrorCode error = BF_GetBlock(filedesc,0,block); //NO WORKEY <-
-    // BF_PrintError(error);
-    return info;
+    BF_OpenFile(fileName, file_desc);
+    BF_GetBlockCounter(*file_desc, &blocknum); //THIS RETURNS 1 
+    BF_ErrorCode error = BF_GetBlock(*file_desc,0,block); //NO WORKEY <-
+    BF_PrintError(error);
+    return hpInfo;
 }
 
 
-int HP_CloseFile( HP_info* hp_info ){
-    return 0;
+int HP_CloseFile(int file_desc,HP_info* hp_info ){
 }
 
-int HP_InsertEntry(HP_info* hp_info, Record record){
-    return 0;
+int HP_InsertEntry(int file_desc,HP_info* hp_info, Record record){
+    return -1;
 }
 
-int HP_GetAllEntries(HP_info* hp_info, int value){
-   return 0;
+int HP_GetAllEntries(int file_desc,HP_info* hp_info, int value){    
+    return -1;
 }
 
