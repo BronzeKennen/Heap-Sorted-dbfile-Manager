@@ -16,34 +16,34 @@
 }
 
 int HP_CreateFile(char *fileName){
-    int filedesc;
-    HP_info info = { Heap, 10, 2};
-    BF_Block *block,*block2;
-    int blocknum;
-
-
-    CALL_BF(BF_CreateFile(fileName));
-
-    CALL_BF(BF_OpenFile(fileName, &filedesc));
-
+    int fd1;
+    BF_Block *block;
+    
     BF_Block_Init(&block);
+    CALL_BF(BF_OpenFile(fileName, &fd1));
+    CALL_BF(BF_AllocateBlock(fd1, block));
 
-    memcpy(block, &info, sizeof(info)); //COPIES FROM HP_INFO STRUCT TO THE RECENTLY INITIALIZED BLOCK
-    CALL_BF(BF_AllocateBlock(filedesc, block)); //ALLOCATES THE BLOCK WITH HP_INFO DATA TO THE HEAP FILE
-    BF_Block_SetDirty(block);
-    CALL_BF(BF_UnpinBlock(block)); //NOTE: BEFORE CLOSING FILE ALL BLOCKS MUST BE UNPINNED OTHERWISE YOU GET ERROR
-    CALL_BF(BF_CloseFile(filedesc));
+    void *test = BF_Block_GetData(block); //GET POINTER TO BEGINNING OF BLOCK
+
+    HP_info *data = test; //MOVE TO AN HP_INFO POINTER  
+    data->type = Heap; // SET DATA FOR HP_INFO
+    data->last_block_id = 0;
+    data->records_per_block = 20;
+    BF_Block_SetDirty(block); //SET DIRTY AND UNPIN TO WRITE TO DISK
+    CALL_BF(BF_UnpinBlock(block));
+    BF_Block_Destroy(&block);
+    CALL_BF(BF_CloseFile(fd1));
     return 0;
 }
 
 HP_info* HP_OpenFile(char *fileName, int *file_desc){
-    HP_info* hpInfo;    
     BF_Block *block;
-    int blocknum;
-    BF_OpenFile(fileName, file_desc);
-    BF_GetBlockCounter(*file_desc, &blocknum); //THIS RETURNS 1 
-    BF_ErrorCode error = BF_GetBlock(*file_desc,0,block); //NO WORKEY <-
-    BF_PrintError(error);
+    BF_Block_Init(&block);
+    BF_OpenFile(fileName,file_desc);
+    BF_GetBlock(*file_desc,0,block);
+    void* test = BF_Block_GetData(block);
+    HP_info *hpInfo = test;
+    BF_Block_Destroy(&block);
     return hpInfo;
 }
 

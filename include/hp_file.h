@@ -15,11 +15,6 @@ typedef struct {
     
 } HP_info;
 
-typedef struct {
-    int num_of_records;
-    BF_Block *next_block_ptr;
-
-} HP_block_info;
 
 
 /*Η συνάρτηση HP_CreateFile χρησιμοποιείται για τη δημιουργία και
