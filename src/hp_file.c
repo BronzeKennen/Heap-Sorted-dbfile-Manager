@@ -56,10 +56,13 @@ int HP_CloseFile(int file_desc,HP_info* hp_info ){
     BF_GetBlockCounter(file_desc,&block_num);
     BF_Block *block;
     BF_Block_Init(&block);
+
     for(int i = 0; i < block_num; i++) {
+
         BF_GetBlock(file_desc,i,block);
         printf("GETTING BLOCK %d\n",i);
         BF_ErrorCode code = BF_UnpinBlock(block);
+    
     }
 }
 
