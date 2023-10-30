@@ -76,15 +76,19 @@ int HP_InsertEntry(int file_desc,HP_info* hp_info, Record record){
 
     if(blockInfo->num_of_records == RECORDS_PER_BLOCK || hp_info->last_block_id == 0) {
         //ALLOCATE NEW BLOCK
-        BF_Block *newBlock =  AllocateAndUpdate(file_desc, hp_info); 
+        BF_Block *newBlock =  AllocateAndUpdate(file_desc, hp_info);
+        blockInfo->next_block = newBlock; 
     } 
     
     BF_GetBlock(file_desc,hp_info->last_block_id,block);
     blockInfo = (HP_block_info*)block + ((BF_BLOCK_SIZE / 4) - sizeof(HP_block_info));
     void* data = BF_Block_GetData(block);
     Record *rec = data;
-    rec[blockInfo->num_of_records + 1] = record; 
-
+    rec[blockInfo->num_of_records] = record;
+    blockInfo->num_of_records++;
+    
+    printf("%d \n",blockInfo->num_of_records); 
+    BF_Block_SetDirty(block);
     return 0;
 }
 
@@ -93,13 +97,13 @@ int HP_GetAllEntries(int file_desc,HP_info* hp_info, int value){
 }
 
 BF_Block* AllocateAndUpdate(int file_desc, HP_info* hp_info) {
+    
     BF_Block *block;
     HP_block_info blockInfo = {0, NULL};
-
     
-    // BF_Block_Init(&block); //CRASHES AT HIGH RECORD NUMBER !!! PLEASE FIX
-    // BF_AllocateBlock(file_desc, block);
-
-    // memcpy((HP_block_info*)block + ((BF_BLOCK_SIZE / 4) - sizeof(HP_block_info)),&blockInfo,sizeof(HP_block_info));
+    BF_Block_Init(&block); 
+    BF_AllocateBlock(file_desc, block);
+    memcpy((HP_block_info*)block + ((BF_BLOCK_SIZE / 4) - sizeof(HP_block_info)),&blockInfo,sizeof(HP_block_info));
+    hp_info->last_block_id++;
     return block;
 }

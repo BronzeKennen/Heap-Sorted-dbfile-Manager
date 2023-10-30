@@ -29,7 +29,7 @@ int main() {
   srand(12569874);
   int r;
   printf("Insert Entries\n");
-  for (int id = 0; id < RECORDS_NUM; ++id) {
+  for (int id = 0; id < 20; ++id) {
     record = randomRecord();
     HP_InsertEntry(file_desc,hp_info2, record);
   }
