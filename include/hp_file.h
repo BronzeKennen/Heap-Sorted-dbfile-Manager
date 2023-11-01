@@ -81,10 +81,6 @@ int HP_GetAllEntries(
     int id                /* η τιμή id της εγγραφής στην οποία πραγματοποιείται η αναζήτηση*/
 );
 
-BF_Block* AllocateAndUpdate (
-    int file_desc,
-    HP_info* header_info
-);
-
+HP_block_info* getBlockInfo(BF_Block* block);
 
 #endif // HP_FILE_H

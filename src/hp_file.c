@@ -83,11 +83,7 @@ int HP_InsertEntry(int file_desc,HP_info* hp_info, Record record){
     HP_block_info* blockInfo;
    
     if(hp_info->last_block_id != 0) {
-
-        data = data + BF_BLOCK_SIZE - sizeof(HP_block_info);
-        void *data2 = data;
-        blockInfo = data2;
-    
+        blockInfo = getBlockInfo(block);
     }
     if(hp_info->last_block_id == 0 || blockInfo->num_of_records == RECORDS_PER_BLOCK) {
         // printf("CREATING BLOCK WITH ID %d\n",hp_info->last_block_id);
@@ -118,9 +114,8 @@ int HP_InsertEntry(int file_desc,HP_info* hp_info, Record record){
     void* recData = BF_Block_GetData(block);
     Record *rec = recData;
     rec[blockInfo->num_of_records] = record;
-    //NUM OF RECORDS IS 0 EVERYWHERE EXCEPT LAST BLOCK PLEASE FIX
 
-    // printf("Record num %d\n",blockInfo->num_of_records);
+    // printf("Record num %d\n",blockInfo->num_of_records); //to print which record is being written
     blockInfo->num_of_records++;
     BF_Block_SetDirty(block);
     BF_UnpinBlock(block);
@@ -136,22 +131,27 @@ int HP_GetAllEntries(int file_desc,HP_info* hp_info, int value){
         
     HP_block_info* blockInfo;
     
-    for(int i = 1; i <= hp_info->last_block_id; i++) {    
+    for(int i = 1; i <= hp_info->last_block_id; i++) { //SEARCH EACH BLOCK
         BF_ErrorCode code = BF_GetBlock(file_desc,i,block);
-        char* blockData = BF_Block_GetData(block);
-        blockData = blockData + BF_BLOCK_SIZE - sizeof(HP_block_info);
-        void* blockData2 = blockData;
-        
-        blockInfo = blockData2;
+        blockInfo = getBlockInfo(block);
 
         void* data = BF_Block_GetData(block);
         Record *recs = data;
-        for(int j = 0; j < blockInfo->num_of_records; j++) {
-            if(recs[j].id == value) {
+        for(int j = 0; j < blockInfo->num_of_records; j++) { //SEARCH EACH ENTRY
+            if(recs[j].id == value) { //IF MATCHING ID PRINT IT
                 printRecord(recs[j]);
+                return 0;
             }
         }
     }
 
     return -1;
+}
+
+HP_block_info* getBlockInfo(BF_Block* block) {
+    char* blockData = BF_Block_GetData(block); //cast to char pointer to increment by 1
+    blockData = blockData + BF_BLOCK_SIZE - sizeof(HP_block_info); //get where we want
+    void* blockData2 = blockData; //cast it to void pointer
+    HP_block_info *blockInfo = blockData2; // and then cast it to HP_block_info (cant directly cast it from char*)
+    return blockInfo;
 }
