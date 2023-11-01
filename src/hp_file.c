@@ -64,7 +64,8 @@ int HP_CloseFile(int file_desc,HP_info* hp_info ){
     for(int i = 0; i < block_num; i++) {
 
         BF_GetBlock(file_desc,i,block);
-        printf("UNPINNING BLOCK %d\n",i);
+        // printf("UNPINNING BLOCK %d\n",i);
+        BF_Block_SetDirty(block);
         BF_ErrorCode code = BF_UnpinBlock(block);
     
     }
@@ -78,32 +79,53 @@ int HP_InsertEntry(int file_desc,HP_info* hp_info, Record record){
 
     BF_GetBlock(file_desc,hp_info->last_block_id,block);
     char *data = BF_Block_GetData(block);
+   
+    HP_block_info* blockInfo;
+   
+    if(hp_info->last_block_id != 0) {
 
-    HP_block_info* blockInfo = data + BF_BLOCK_SIZE - sizeof(HP_block_info);
-    printf("%d\n",blockInfo->num_of_records);
-    if(hp_info->last_block_id == 0 || blockInfo->num_of_records == RECORDS_PER_BLOCK) {
-        
-        BF_AllocateBlock(file_desc,block);
-        HP_block_info blockInfo = {0,NULL};
-        char* blockData = BF_Block_GetData(block);
-        memcpy(blockData + BF_BLOCK_SIZE - sizeof(HP_block_info),&blockInfo,sizeof(HP_block_info));
+        data = data + BF_BLOCK_SIZE - sizeof(HP_block_info);
+        void *data2 = data;
+        blockInfo = data2;
     
     }
+    if(hp_info->last_block_id == 0 || blockInfo->num_of_records == RECORDS_PER_BLOCK) {
+        printf("CREATING BLOCK WITH ID %d\n",hp_info->last_block_id);
+        BF_Block *newBlock;
+        BF_Block_Init(&newBlock);
+        BF_AllocateBlock(file_desc,newBlock);
+        HP_block_info blockInfoNew = {0,NULL}; //set block info
+        
+        char* blockData = BF_Block_GetData(newBlock);
+        blockData = blockData + (BF_BLOCK_SIZE - sizeof(HP_block_info));
+        
+        memcpy(blockData,&blockInfoNew,sizeof(HP_block_info)); //go to end of block and copy the info created
+        if(hp_info->last_block_id != 0) {
+            blockInfo->next_block = newBlock;
+            memcpy(data,blockInfo,sizeof(HP_block_info));
+            BF_UnpinBlock(block);
+        }
+        hp_info->last_block_id++;
+        block = newBlock;
+
+    }
+    char *infoData = BF_Block_GetData(block);
+
+    infoData = infoData + BF_BLOCK_SIZE - sizeof(HP_block_info);
+    void *infoData2 = infoData;
+    
+    blockInfo = infoData2;
+    void* recData = BF_Block_GetData(block);
+    Record *rec = recData;
+    rec[blockInfo->num_of_records] = record;
+
+    printf("Record num %d\n",blockInfo->num_of_records);
+    blockInfo->num_of_records++;
+    BF_Block_SetDirty(block);
     return 0;
 }
 
 int HP_GetAllEntries(int file_desc,HP_info* hp_info, int value){    
+    
     return -1;
 }
-
-// BF_Block* AllocateAndUpdate(int file_desc, HP_info* hp_info) {
-    
-//     BF_Block *block;
-//     HP_block_info blockInfo = {0, NULL};
-    
-//     BF_Block_Init(&block); 
-//     BF_AllocateBlock(file_desc, block);
-//     memcpy((char*)block + ((BF_BLOCK_SIZE) - sizeof(HP_block_info)),&blockInfo,sizeof(HP_block_info));
-//     hp_info->last_block_id++;
-//     return block;
-// }
