@@ -90,7 +90,7 @@ int HP_InsertEntry(int file_desc,HP_info* hp_info, Record record){
     
     }
     if(hp_info->last_block_id == 0 || blockInfo->num_of_records == RECORDS_PER_BLOCK) {
-        printf("CREATING BLOCK WITH ID %d\n",hp_info->last_block_id);
+        // printf("CREATING BLOCK WITH ID %d\n",hp_info->last_block_id);
         BF_Block *newBlock;
         BF_Block_Init(&newBlock);
         BF_AllocateBlock(file_desc,newBlock);
@@ -118,14 +118,40 @@ int HP_InsertEntry(int file_desc,HP_info* hp_info, Record record){
     void* recData = BF_Block_GetData(block);
     Record *rec = recData;
     rec[blockInfo->num_of_records] = record;
+    //NUM OF RECORDS IS 0 EVERYWHERE EXCEPT LAST BLOCK PLEASE FIX
 
-    printf("Record num %d\n",blockInfo->num_of_records);
+    // printf("Record num %d\n",blockInfo->num_of_records);
     blockInfo->num_of_records++;
     BF_Block_SetDirty(block);
+    BF_UnpinBlock(block);
     return 0;
 }
 
 int HP_GetAllEntries(int file_desc,HP_info* hp_info, int value){    
+   
+    BF_Block *block;
+    BF_Block_Init(&block);
+
+    char *data = BF_Block_GetData(block);
+        
+    HP_block_info* blockInfo;
     
+    for(int i = 1; i <= hp_info->last_block_id; i++) {    
+        BF_ErrorCode code = BF_GetBlock(file_desc,i,block);
+        char* blockData = BF_Block_GetData(block);
+        blockData = blockData + BF_BLOCK_SIZE - sizeof(HP_block_info);
+        void* blockData2 = blockData;
+        
+        blockInfo = blockData2;
+
+        void* data = BF_Block_GetData(block);
+        Record *recs = data;
+        for(int j = 0; j < blockInfo->num_of_records; j++) {
+            if(recs[j].id == value) {
+                printRecord(recs[j]);
+            }
+        }
+    }
+
     return -1;
 }
