@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <stdbool.h>
 
 #include "bf.h"
 #include "hp_file.h"
@@ -25,9 +26,9 @@ int HP_CreateFile(char *fileName){
     CALL_BF(BF_OpenFile(fileName, &file_desc));
     CALL_BF(BF_AllocateBlock(file_desc, block));
 
-    void *test = BF_Block_GetData(block); //GET POINTER TO BEGINNING OF BLOCK
+    HP_info *data = (HP_info*)BF_Block_GetData(block); //GET POINTER TO BEGINNING OF BLOCK
 
-    HP_info *data = test; //MOVE TO AN HP_INFO POINTER  
+    // HP_info *data = test; //MOVE TO AN HP_INFO POINTER  
     data->type = Heap; // SET DATA FOR HP_INFO
     data->last_block_id = 0;
     
@@ -59,7 +60,7 @@ int HP_CloseFile(int file_desc,HP_info* hp_info ){
     int block_num;
     BF_GetBlockCounter(file_desc,&block_num);
     BF_Block *block;
-    BF_Block_Init(&block);
+    BF_Block_Init(&block);  
 
     for(int i = 0; i < block_num; i++) {
 
@@ -69,6 +70,8 @@ int HP_CloseFile(int file_desc,HP_info* hp_info ){
         BF_ErrorCode code = BF_UnpinBlock(block);
     
     }
+
+    BF_Block_Destroy(&block);   
 
     BF_CloseFile(file_desc);
 }
@@ -96,14 +99,19 @@ int HP_InsertEntry(int file_desc,HP_info* hp_info, Record record){
         blockData = blockData + (BF_BLOCK_SIZE - sizeof(HP_block_info));
         
         memcpy(blockData,&blockInfoNew,sizeof(HP_block_info)); //go to end of block and copy the info created
+        BF_Block_SetDirty(newBlock);
         if(hp_info->last_block_id != 0) {
             blockInfo->next_block = newBlock;
             memcpy(data,blockInfo,sizeof(HP_block_info));
             BF_UnpinBlock(block);
+            BF_Block_SetDirty(block); //////////////////????????????????????????????????
         }
         hp_info->last_block_id++;
         block = newBlock;
-
+        // printf("NewBlock = %p --- last_block_id = %p\n", newBlock, hp_info->last_block_id);
+        // newBlock = NULL;
+        // BF_UnpinBlock(newBlock);
+        // BF_Block_Destroy(&newBlock);
     }
     char *infoData = BF_Block_GetData(block);
 
@@ -119,6 +127,8 @@ int HP_InsertEntry(int file_desc,HP_info* hp_info, Record record){
     blockInfo->num_of_records++;
     BF_Block_SetDirty(block);
     BF_UnpinBlock(block);
+
+    BF_Block_Destroy(&block);
     return 0;
 }
 
@@ -128,6 +138,9 @@ int HP_GetAllEntries(int file_desc,HP_info* hp_info, int value){
     BF_Block_Init(&block);
 
     char *data = BF_Block_GetData(block);
+
+    int block_count = 0;
+    bool flag = 0;
         
     HP_block_info* blockInfo;
     
@@ -137,15 +150,21 @@ int HP_GetAllEntries(int file_desc,HP_info* hp_info, int value){
 
         void* data = BF_Block_GetData(block);
         Record *recs = data;
+
+        block_count++;
         for(int j = 0; j < blockInfo->num_of_records; j++) { //SEARCH EACH ENTRY
             if(recs[j].id == value) { //IF MATCHING ID PRINT IT
                 printRecord(recs[j]);
-                return 0;
             }
         }
     }
-
-    return -1;
+    BF_Block_Destroy(&block);
+    
+    //  IF THE SEARCH WAS SUCCESSFULL
+    if(flag)
+        return block_count;
+    else
+        return -1;
 }
 
 HP_block_info* getBlockInfo(BF_Block* block) {
