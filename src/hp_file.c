@@ -102,23 +102,16 @@ int HP_InsertEntry(int file_desc,HP_info* hp_info, Record record){
         // h prwth einai hpinfo ara den exei block info
         if(hp_info->last_block_id != 0) {
             blockInfo->next_block = block;
-            // memcpy(data,blockInfo,sizeof(HP_block_info));
             BF_Block_SetDirty(block); //////////////////????????????????????????????????
             BF_UnpinBlock(block);
         }
         hp_info->last_block_id++;
-        block = newBlock;
-        // printf("NewBlock = %p --- last_block_id = %p\n", newBlock, hp_info->last_block_id);
-        // newBlock = NULL;
-        // BF_UnpinBlock(newBlock);
-        // BF_Block_Destroy(&newBlock);
+        BF_UnpinBlock(newBlock);
+        BF_Block_Destroy(&newBlock);
+        
     }
-    char *infoData = BF_Block_GetData(block);
-
-    infoData = infoData + BF_BLOCK_SIZE - sizeof(HP_block_info);
-    void *infoData2 = infoData;
-    
-    blockInfo = infoData2;
+    BF_GetBlock(file_desc,hp_info->last_block_id,block);
+    blockInfo = getBlockInfo(block);
     void* recData = BF_Block_GetData(block);
     Record *rec = recData;
     rec[blockInfo->num_of_records] = record;
