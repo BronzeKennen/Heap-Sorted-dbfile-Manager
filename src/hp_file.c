@@ -1,7 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <stdbool.h>
 
 #include "bf.h"
 #include "hp_file.h"
@@ -138,33 +137,32 @@ int HP_GetAllEntries(int file_desc,HP_info* hp_info, int value){
     BF_Block_Init(&block);
 
     char *data = BF_Block_GetData(block);
-
-    int block_count = 0;
-    bool flag = 0;
         
     HP_block_info* blockInfo;
     
     for(int i = 1; i <= hp_info->last_block_id; i++) { //SEARCH EACH BLOCK
         BF_ErrorCode code = BF_GetBlock(file_desc,i,block);
+
+        // IF ERROR OCCURS
+        if(code != BF_OK)
+            return -1;
+
         blockInfo = getBlockInfo(block);
 
         void* data = BF_Block_GetData(block);
         Record *recs = data;
 
-        block_count++;
         for(int j = 0; j < blockInfo->num_of_records; j++) { //SEARCH EACH ENTRY
             if(recs[j].id == value) { //IF MATCHING ID PRINT IT
                 printRecord(recs[j]);
             }
         }
+        BF_UnpinBlock(block);
     }
     BF_Block_Destroy(&block);
     
-    //  IF THE SEARCH WAS SUCCESSFULL
-    if(flag)
-        return block_count;
-    else
-        return -1;
+    // return number of blocks read while searching 
+    return hp_info->last_block_id;
 }
 
 HP_block_info* getBlockInfo(BF_Block* block) {
