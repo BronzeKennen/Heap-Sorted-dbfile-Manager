@@ -142,7 +142,6 @@ int HP_GetAllEntries(int file_desc,HP_info* hp_info, int value){
     
     for(int i = 1; i <= hp_info->last_block_id; i++) { //SEARCH EACH BLOCK
         BF_ErrorCode code = BF_GetBlock(file_desc,i,block);
-
         // IF ERROR OCCURS
         if(code != BF_OK)
             return -1;
