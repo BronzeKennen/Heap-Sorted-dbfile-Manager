@@ -98,12 +98,13 @@ int HP_InsertEntry(int file_desc,HP_info* hp_info, Record record){
         blockData = blockData + (BF_BLOCK_SIZE - sizeof(HP_block_info));
         
         memcpy(blockData,&blockInfoNew,sizeof(HP_block_info)); //go to end of block and copy the info created
-        BF_Block_SetDirty(newBlock);
+        BF_Block_SetDirty(block);
+        // h prwth einai hpinfo ara den exei block info
         if(hp_info->last_block_id != 0) {
-            blockInfo->next_block = newBlock;
-            memcpy(data,blockInfo,sizeof(HP_block_info));
-            BF_UnpinBlock(block);
+            blockInfo->next_block = block;
+            // memcpy(data,blockInfo,sizeof(HP_block_info));
             BF_Block_SetDirty(block); //////////////////????????????????????????????????
+            BF_UnpinBlock(block);
         }
         hp_info->last_block_id++;
         block = newBlock;
