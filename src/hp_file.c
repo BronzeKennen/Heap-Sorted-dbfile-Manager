@@ -26,15 +26,17 @@ int HP_CreateFile(char *fileName){
     CALL_BF(BF_AllocateBlock(file_desc, block));
 
     HP_info *data = (HP_info*)BF_Block_GetData(block); //Get pointer to beginning of block
-
+    if(!data)
+        return -1;
     data->type = Heap; // Set data for hp_info
-    data->last_block_id = 0;
+    data->last_block_id = 0;  // The file only contains one block so set it as the last one
     
     BF_Block_SetDirty(block); //Set dirty and unpin
     
     CALL_BF(BF_UnpinBlock(block));
     BF_Block_Destroy(&block);
     CALL_BF(BF_CloseFile(file_desc));
+
     return 0;
 }
 
@@ -58,24 +60,31 @@ int HP_CloseFile(int file_desc,HP_info* hp_info ){
     BF_GetBlockCounter(file_desc,&block_num);
     BF_Block *block;
     BF_Block_Init(&block);  
+    BF_ErrorCode code;
 
     for(int i = 0; i < block_num; i++) { //Unpin all blocks (file cannot close otherwise)
 
         BF_GetBlock(file_desc,i,block);
-        BF_ErrorCode code = BF_UnpinBlock(block);
+        code = BF_UnpinBlock(block);
+        if(code != BF_OK)
+            return -1;
     
     }
 
     BF_Block_Destroy(&block);   
 
-    BF_CloseFile(file_desc);
+    code = BF_CloseFile(file_desc);
+    if(code != BF_OK)
+            return -1;
+    
+    return 0;
 }
 
 int HP_InsertEntry(int file_desc,HP_info* hp_info, Record record){
     BF_Block *block;
     BF_Block_Init(&block);
 
-    BF_GetBlock(file_desc,hp_info->last_block_id,block); //Getr last block
+    BF_GetBlock(file_desc,hp_info->last_block_id,block); //Get last block
     char *data = BF_Block_GetData(block);
    
     HP_block_info* blockInfo;
@@ -99,13 +108,15 @@ int HP_InsertEntry(int file_desc,HP_info* hp_info, Record record){
             BF_Block_SetDirty(block); //we are done with old block so unpin
             BF_UnpinBlock(block);
         }
-        hp_info->last_block_id++; //More blocks!!!
+        hp_info->last_block_id++; //Update the file's metadata
         BF_UnpinBlock(newBlock);
         BF_Block_Destroy(&newBlock); //we are done with new block (for now)
         
     }
 
-    BF_GetBlock(file_desc,hp_info->last_block_id,block); //get the last block created
+    BF_ErrorCode code = BF_GetBlock(file_desc,hp_info->last_block_id,block); //get the last block created
+    if(code != BF_OK)
+        return -1;
     blockInfo = getBlockInfo(block);
     void* recData = BF_Block_GetData(block);
     Record *rec = recData;
@@ -116,7 +127,7 @@ int HP_InsertEntry(int file_desc,HP_info* hp_info, Record record){
     BF_UnpinBlock(block);
 
     BF_Block_Destroy(&block);
-    return 0;
+    return hp_info->last_block_id;
 }
 
 int HP_GetAllEntries(int file_desc,HP_info* hp_info, int value){    
@@ -147,7 +158,7 @@ int HP_GetAllEntries(int file_desc,HP_info* hp_info, int value){
     }
     BF_Block_Destroy(&block);
     
-    return hp_info->last_block_id;
+    return hp_info->last_block_id; // the number of blocks read is the same as the id of the last block
 }
 
 HP_block_info* getBlockInfo(BF_Block* block) {

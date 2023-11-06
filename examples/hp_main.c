@@ -31,10 +31,10 @@ int main() {
   printf("Insert Entries\n");
   for (int id = 0; id < RECORDS_NUM; ++id) {
     record = randomRecord();
-    HP_InsertEntry(file_desc,hp_info2, record);
+    int block_id = HP_InsertEntry(file_desc,hp_info2, record);
   }
 
-  printf("RUN PrintAllEntries\n");
+  printf("\nRUN PrintAllEntries\n");
   int id = rand() % RECORDS_NUM;
   printf("\nSearching for: %d\n",id);
   int blocks = HP_GetAllEntries(file_desc,hp_info2, id);
