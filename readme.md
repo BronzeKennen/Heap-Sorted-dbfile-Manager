@@ -1,4 +1,4 @@
-# Heap database file reader
+# Heap Sorted Database File Manager
 
 Για την δημιουργία του εκτελέσιμου:
 	make hp;
